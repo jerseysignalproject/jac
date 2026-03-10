@@ -1,5 +1,5 @@
 # ⚓ JAC // JERSEY ANARCHO-COLLECTIVE
-### *The 500KB Sovereign Intelligence Suite for the Garden State.*
+### *The ~900KB Sovereign Intelligence Suite for the Garden State.*
 
 ![NJ-Shield](https://img.shields.io/badge/Region-New%20Jersey-orange?style=for-the-badge&logo=newjersey)
 ![Vanila-JS](https://img.shields.io/badge/Built%20With-Vanilla%20JS-yellow?style=for-the-badge&logo=javascript)
