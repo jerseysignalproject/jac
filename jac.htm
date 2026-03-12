@@ -382,8 +382,7 @@ body::after {
   pointer-events:none;
   z-index:300;
 }
-/* Don't let the vignette blur the arcade canvas */
-#panel-arcade.active ~ * { pointer-events:none; }
+/* Don't let the vignette obscure the arcade canvas */
 body:has(#panel-arcade.active)::after { opacity:0; }
 
 #app-container {
@@ -954,10 +953,10 @@ canvas:fullscreen, canvas:-webkit-full-screen, canvas:-moz-full-screen {
 .ae-help { background:rgba(0,180,255,0.1); border-color:rgba(0,180,255,0.4); color:#88ddff; }
 .ae-apply:hover { background:rgba(0,255,100,0.28); }
 .ae-cancel:hover { background:rgba(255,80,80,0.22); }
-/* Arcade canvas sits above the CSS scanline/vignette overlays (z-index 50/300)
-   The engine draws its own scanlines internally so CSS ones are redundant and blurry */
-#panel-arcade { position:relative; z-index:51; }
-#arcade-canvas { position:relative; z-index:52; image-rendering:pixelated; image-rendering:crisp-edges; }
+/* Arcade canvas sits above the CSS scanline/vignette overlays.
+   The engine draws its own scanlines internally so CSS ones are redundant and blurry. */
+#panel-arcade { position:relative; }
+#arcade-canvas { position:relative; z-index:2; image-rendering:pixelated; image-rendering:crisp-edges; }
 /* Kill the app-container scanline overlay when arcade is active */
 #app-container:has(#panel-arcade.active)::before { opacity:0; }
 #arcade-canvas { display:block; }
@@ -1225,7 +1224,7 @@ body.printing a           { color: #111 !important; }
   flex-shrink: 0;
   background: var(--bg, #000);
   border-bottom: 2px solid rgba(0,255,255,0.15);
-  z-index: 60;
+  z-index: 2;
 }
 
 /* Toolbar */
@@ -1473,18 +1472,24 @@ body.printing a           { color: #111 !important; }
     <div class="nav-bar" style="align-items:center;">
       <div class="nb nb-panic danger" onclick="panicProtocol()" title="Ghost mode / Hard wipe">PANIC</div>
       <div class="nb nb-kyralert" onclick="showKYR()" title="Know Your Rights" style="border-color:#ff4444;color:#ff4444;">KYR</div>
-      <div class="nb" onclick="openOverlay('config-overlay')" title="Settings &amp; themes">CONFIG</div>
+      <div class="nb" onclick="openOverlay('config-overlay')" title="Settings &amp; themes">THEME</div>
       <div class="nb nb-compile" onclick="exportDB()" title="Bake into shareable HTML">COMPILE</div>
       <!-- EN/ES language toggle -->
       <div class="nb" id="nb-lang-btn" onclick="toggleAppLang()" title="Toggle English / Español" style="border-color:#ffee44;color:#111;background:#ffee44;letter-spacing:.05em;min-width:64px;text-align:center;font-weight:bold;font-size:0.72rem;">ESPAÑOL</div>
       <!-- ··· overflow menu -->
       <div style="position:relative;display:inline-block;">
         <div class="nb" id="nb-more-btn" onclick="toggleMoreMenu()" title="More options" style="letter-spacing:2px;padding:3px 9px;">···</div>
-        <div id="nb-more-menu" style="display:none;position:absolute;right:0;top:100%;margin-top:3px;background:var(--panel);border:1px solid rgba(255,255,255,0.15);z-index:200;min-width:130px;box-shadow:0 4px 20px rgba(0,0,0,0.6);">
+        <div id="nb-more-menu" style="display:none;position:absolute;right:0;top:100%;margin-top:3px;background:var(--panel);border:1px solid rgba(255,255,255,0.15);z-index:200;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,0.6);">
+          <div class="nb-menu-item" onclick="switchTab('saved');savedSwitch('bookmarks');toggleMoreMenu()">★ BOOKMARKS</div>
+          <div class="nb-menu-item" onclick="switchTab('saved');savedSwitch('history');toggleMoreMenu()">⟳ HISTORY</div>
+          <div style="border-top:1px solid rgba(255,255,255,0.1);margin:2px 0;"></div>
+          <div class="nb-menu-item" onclick="openGlobalSettings();toggleMoreMenu()">⚙ GLOBAL SETTINGS</div>
+          <div style="border-top:1px solid rgba(255,255,255,0.1);margin:2px 0;"></div>
           <div class="nb-menu-item" onclick="openOverlay('media-overlay');toggleMoreMenu()">▶ MEDIA</div>
           <div class="nb-menu-item" onclick="openOverlay('data-overlay');toggleMoreMenu()">＋ DATA IMPORT</div>
           <div class="nb-menu-item" onclick="openOverlay('feed-overlay');toggleMoreMenu()">↓ FEED INGEST</div>
           <div class="nb-menu-item" onclick="printChat();toggleMoreMenu()">⎙ PRINT</div>
+          <div class="nb-menu-item" onclick="openDataLab();toggleMoreMenu()">⬡ DATA LAB</div>
           <div class="nb-menu-item" onclick="openOverlay('help-overlay');toggleMoreMenu()">? HELP</div>
           <div class="nb-menu-item" onclick="openOverlay('about-overlay');toggleMoreMenu()">ℹ ABOUT</div>
         </div>
@@ -1494,14 +1499,13 @@ body.printing a           { color: #111 !important; }
 
   <!-- TAB BAR -->
   <div id="tab-bar">
-    <div class="tab active" data-tab="chat"    onclick="switchTab('chat')">CHAT</div>
-    <div class="tab"        data-tab="tags"    onclick="switchTab('tags')">FIND</div>
-    <div class="tab"        data-tab="saved"   onclick="switchTab('saved')">SAVED</div>
-    <div class="tab"        data-tab="editor"  onclick="switchTab('editor')">DATA</div>
-    <div class="tab"        data-tab="lang"    onclick="switchTab('lang')" style="color:#44ffaa;">📖 LEARNING</div>
-    <div class="tab"        data-tab="arcade"  onclick="switchTab('arcade')" style="color:#ff00ff;font-weight:bold;">▶ ARCADE</div>
-    <div class="tab"        data-tab="community" onclick="switchTab('community')" style="color:#ffaa00;font-weight:bold;">🏘 COMMUNITY</div>
-    <div class="tab"        data-tab="music"     onclick="switchTab('music')" style="color:#1DB954;font-weight:bold;">♪ MUSIC</div>
+    <div class="tab active" data-tab="chat"      onclick="switchTab('chat')">CHAT</div>
+    <div class="tab"        data-tab="writer"    onclick="switchTab('writer')">✎ WRITER</div>
+    <div class="tab"        data-tab="lang"      onclick="switchTab('lang')">📖 LEARNING</div>
+    <div class="tab"        data-tab="arcade"    onclick="switchTab('arcade')">▶ ARCADE</div>
+    <div class="tab"        data-tab="community" onclick="switchTab('community')">🏘 COMMUNITY</div>
+    <div class="tab"        data-tab="music"     onclick="switchTab('music')">♪ MUSIC</div>
+    <div class="tab"        data-tab="editor"    onclick="switchTab('editor')">DATA</div>
   </div>
 
   <!-- ── CHAT PANEL ── -->
@@ -1511,11 +1515,20 @@ body.printing a           { color: #111 !important; }
       <button onclick="recallLast()" title="Recall last query" style="padding:7px 10px">↩</button>
       <input type="text" id="user-input" placeholder="Query the Collective, enter equation, or type a #tag…"
              onkeydown="inputKeyHandler(event)">
+      <button onclick="toggleTagCloud()" title="Tag Cloud" id="tag-cloud-btn" style="padding:7px 10px;border-color:var(--hi);color:var(--hi);"># TAGS</button>
       <button onclick="handleSend()">SEND</button>
+    </div>
+    <!-- Inline tag cloud panel in chat -->
+    <div id="inline-tag-cloud" style="display:none;padding:10px 14px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.3);max-height:160px;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:0.62rem;color:var(--text-dim);letter-spacing:0.08em;">TAG CLOUD — click to search</span>
+        <button onclick="toggleTagCloud()" style="font-size:0.6rem;padding:2px 7px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:var(--text-dim);">✕</button>
+      </div>
+      <div id="inline-tag-cloud-content"></div>
     </div>
   </div>
 
-  <!-- ── TAG INDEX PANEL ── -->
+  <!-- ── TAG INDEX PANEL (now button in chat, kept for reference) ── -->
   <div id="panel-tags" class="panel-view">
     <div id="tags-area">
       <div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:12px;">Click any tag to search it in the chat.</div>
@@ -1523,11 +1536,64 @@ body.printing a           { color: #111 !important; }
     </div>
   </div>
 
+  <!-- ── WRITER PANEL ── -->
+  <div id="panel-writer" class="panel-view" style="flex-direction:column;">
+    <div id="notes-area-writer" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div id="notes-toolbar">
+        <span id="notes-label">WRITER · auto-saved</span>
+        <button class="notes-tool-btn" onclick="runGrammarCheck()">GRAMMAR</button>
+        <button class="notes-tool-btn" onclick="runRewrite()">REWRITE</button>
+        <button class="notes-tool-btn" onclick="runFormalise()">FORMALISE</button>
+        <button onclick="exportNotesRTF()" style="font-size:0.62rem;padding:4px 9px;margin-left:4px;">EXPORT .RTF</button>
+        <button onclick="exportNotesHTML()" style="font-size:0.62rem;padding:4px 9px;">EXPORT .HTML</button>
+        <button class="btn-hi" onclick="clearNotes()" style="font-size:0.62rem;padding:4px 9px;">CLEAR</button>
+      </div>
+      <div id="notes-fmt-bar">
+        <button class="fmt-btn" id="fmt-bold"   onclick="fmtExec('bold')"><b>B</b></button>
+        <button class="fmt-btn" id="fmt-italic" onclick="fmtExec('italic')"><i>I</i></button>
+        <button class="fmt-btn" id="fmt-under"  onclick="fmtExec('underline')"><u>U</u></button>
+        <button class="fmt-btn" id="fmt-strike" onclick="fmtExec('strikeThrough')"><s>S</s></button>
+        <span class="fmt-sep"></span>
+        <button class="fmt-btn" onclick="fmtBlock('h1')">H1</button>
+        <button class="fmt-btn" onclick="fmtBlock('h2')">H2</button>
+        <button class="fmt-btn" onclick="fmtBlock('h3')">H3</button>
+        <button class="fmt-btn" onclick="fmtBlock('p')">¶</button>
+        <button class="fmt-btn" onclick="fmtBlock('blockquote')">❝</button>
+        <span class="fmt-sep"></span>
+        <button class="fmt-btn" onclick="fmtExec('insertUnorderedList')">• —</button>
+        <button class="fmt-btn" onclick="fmtExec('insertOrderedList')">1.</button>
+        <button class="fmt-btn" onclick="fmtExec('indent')">⇥</button>
+        <button class="fmt-btn" onclick="fmtExec('outdent')">⇤</button>
+        <span class="fmt-sep"></span>
+        <button class="fmt-btn" onclick="fmtExec('justifyLeft')">⬤≡</button>
+        <button class="fmt-btn" onclick="fmtExec('justifyCenter')">≡≡</button>
+        <button class="fmt-btn" onclick="fmtExec('justifyRight')">≡⬤</button>
+        <span class="fmt-sep"></span>
+        <select id="fmt-font-size-w" onchange="fmtFontSize(this.value)">
+          <option value="">size</option><option value="1">XS</option>
+          <option value="2">S</option><option value="3" selected>M</option>
+          <option value="4">L</option><option value="5">XL</option><option value="6">XXL</option>
+        </select>
+        <input type="color" id="fmt-fore-color-w" value="#e0e0e0" onchange="fmtExec('foreColor',this.value)">
+        <input type="color" id="fmt-hi-color-w"   value="#ffff00" onchange="fmtExec('hiliteColor',this.value)">
+        <span class="fmt-sep"></span>
+        <button class="fmt-btn" onclick="fmtInsertRule()">HR</button>
+        <button class="fmt-btn" onclick="fmtInsertCode()">&#60;/&#62;</button>
+        <button class="fmt-btn" onclick="fmtExec('removeFormat')">✕fmt</button>
+      </div>
+      <div id="writing-panel"></div>
+      <div id="notes-editor" contenteditable="true" spellcheck="true"
+           onkeyup="saveNotes()" onpaste="setTimeout(saveNotes,10)"
+           oninput="saveNotes();updateFmtBar()"
+           onmouseup="updateFmtBar()" onkeydown="notesKeydown(event)"
+           data-placeholder="Secure local notes — never transmitted…"></div>
+    </div>
+  </div>
+
   <!-- ── SAVED PANEL ── -->
   <div id="panel-saved" class="panel-view" style="flex-direction:column;">
-    <div id="saved-subtabs">
+    <div id="saved-subtabs" style="display:none;">
       <div class="saved-tab active" data-saved="bookmarks" onclick="savedSwitch('bookmarks')">★ BOOKMARKS</div>
-      <div class="saved-tab"        data-saved="notes"     onclick="savedSwitch('notes')">✎ NOTES</div>
       <div class="saved-tab"        data-saved="history"   onclick="savedSwitch('history')">⟳ HISTORY</div>
     </div>
     <div id="saved-bookmarks" style="flex:1;overflow-y:auto;padding:12px 16px;">
@@ -1542,7 +1608,6 @@ body.printing a           { color: #111 !important; }
           <button class="notes-tool-btn" onclick="runGrammarCheck()">GRAMMAR</button>
           <button class="notes-tool-btn" onclick="runRewrite()">REWRITE</button>
           <button class="notes-tool-btn" onclick="runFormalise()">FORMALISE</button>
-          <button class="notes-tool-btn" onclick="closeWritingPanel()">✕</button>
           <button onclick="exportNotesRTF()" style="font-size:0.62rem;padding:4px 9px;margin-left:4px;">EXPORT .RTF</button>
           <button onclick="exportNotesHTML()" style="font-size:0.62rem;padding:4px 9px;">EXPORT .HTML</button>
           <button class="btn-hi" onclick="clearNotes()" style="font-size:0.62rem;padding:4px 9px;">CLEAR</button>
@@ -2002,6 +2067,320 @@ body.printing a           { color: #111 !important; }
     </div>
   </div>
 
+  <!-- ══ OVERLAY: GLOBAL SETTINGS ══ -->
+  <div id="global-settings-overlay" class="overlay" style="display:none;">
+    <div class="overlay-inner" style="width:min(98%,720px);max-height:92vh;overflow-y:auto;">
+      <h2 style="color:var(--accent);margin-bottom:4px;letter-spacing:0.12em;">⚙ GLOBAL SETTINGS</h2>
+      <div style="font-size:0.62rem;color:var(--text-dim);margin-bottom:16px;">All settings save instantly to localStorage. Use <strong style="color:var(--hi);">COMPILE + DOWNLOAD</strong> to bake current settings into a portable HTML file.</div>
+
+      <!-- SECTION: APPEARANCE -->
+      <div style="font-size:0.66rem;color:var(--accent);letter-spacing:0.12em;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;margin-bottom:12px;">▸ APPEARANCE</div>
+      <div class="config-grid">
+        <div class="field-row">
+          <label class="field-label">THEME</label>
+          <select id="gs-theme" onchange="setTheme(this.value)">
+            <option value="">JAC DEFAULT</option>
+            <option value="forest">FOREST</option>
+            <option value="redline">RED LINE</option>
+            <option value="zine">ZINE/XEROX</option>
+            <option value="ghost">GHOST/NJT</option>
+            <option value="aero">FRUTIGER AERO</option>
+            <option value="pool">🌊 POOL DAY</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label class="field-label">FONT SIZE</label>
+          <select id="gs-fsize" onchange="setFontSize(this.value);gsSync()">
+            <option value="sm">Small</option>
+            <option value="md" selected>Medium</option>
+            <option value="lg">Large</option>
+            <option value="xl">X-Large</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label class="field-label">UI BLOOM</label>
+          <select id="gs-bloom" onchange="setBloom(this.value);gsSync()">
+            <option value="0px">None</option>
+            <option value="4px">Subtle</option>
+            <option value="6px" selected>Standard</option>
+            <option value="14px">Max</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label class="field-label">SCANLINES</label>
+          <select id="gs-scan" onchange="setScanlines(this.value);gsSync()">
+            <option value="0.14" selected>On</option>
+            <option value="0">Off</option>
+            <option value="0.35">Heavy</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SECTION: CHAT & BEHAVIOUR -->
+      <div style="font-size:0.66rem;color:var(--accent);letter-spacing:0.12em;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;margin:14px 0 12px;">▸ CHAT & BEHAVIOUR</div>
+      <div class="config-grid">
+        <div class="field-row">
+          <label class="field-label">OPERATIVE ID</label>
+          <input type="text" id="gs-name" oninput="cfg.name=this.value;saveCfg()" placeholder="Anonymous">
+        </div>
+        <div class="field-row">
+          <label class="field-label">RESPONSE LATENCY (ms)</label>
+          <input type="number" id="gs-latency" value="350" min="0" max="3000" oninput="cfg.latency=+this.value;saveCfg()">
+        </div>
+        <div class="field-row">
+          <label class="field-label">MAX SEARCH RESULTS</label>
+          <input type="number" id="gs-maxres" value="6" min="1" max="20" oninput="cfg.maxResults=+this.value;saveCfg()">
+        </div>
+        <div class="field-row">
+          <label class="field-label">SHOW TIMESTAMP</label>
+          <select id="gs-ts" onchange="cfg.showTimestamp=(this.value==='1');saveCfg()">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label class="field-label">DEFAULT LANGUAGE</label>
+          <select id="gs-lang" onchange="APP_LANG=this.value;try{localStorage.setItem('jac_app_lang',APP_LANG);}catch(e){}applyAppLang();">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SECTION: CSS VARIABLES (ADVANCED) -->
+      <div style="font-size:0.66rem;color:var(--accent);letter-spacing:0.12em;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;margin:14px 0 12px;">▸ COLOR PALETTE (ADVANCED)</div>
+      <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:10px;">Override theme colors. Changes apply instantly and are saved per-session.</div>
+      <div class="config-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">
+        <div class="field-row">
+          <label class="field-label">BG COLOR</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-bg" value="#050505" oninput="document.documentElement.style.setProperty('--bg',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-bg-txt" value="#050505" oninput="document.documentElement.style.setProperty('--bg',this.value);document.getElementById('gs-col-bg').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">PANEL COLOR</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-panel" value="#0e0e0e" oninput="document.documentElement.style.setProperty('--panel',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-panel-txt" value="#0e0e0e" oninput="document.documentElement.style.setProperty('--panel',this.value);document.getElementById('gs-col-panel').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">BORDER / PRIMARY</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-border" value="#00ffff" oninput="document.documentElement.style.setProperty('--border',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-border-txt" value="#00ffff" oninput="document.documentElement.style.setProperty('--border',this.value);document.getElementById('gs-col-border').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">ACCENT COLOR</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-accent" value="#ff00ff" oninput="document.documentElement.style.setProperty('--accent',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-accent-txt" value="#ff00ff" oninput="document.documentElement.style.setProperty('--accent',this.value);document.getElementById('gs-col-accent').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">HIGHLIGHT COLOR</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-hi" value="#39ff14" oninput="document.documentElement.style.setProperty('--hi',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-hi-txt" value="#39ff14" oninput="document.documentElement.style.setProperty('--hi',this.value);document.getElementById('gs-col-hi').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">WARNING COLOR</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-warn" value="#ffe600" oninput="document.documentElement.style.setProperty('--warn',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-warn-txt" value="#ffe600" oninput="document.documentElement.style.setProperty('--warn',this.value);document.getElementById('gs-col-warn').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">TEXT COLOR</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-text" value="#f2f2f2" oninput="document.documentElement.style.setProperty('--text',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-text-txt" value="#f2f2f2" oninput="document.documentElement.style.setProperty('--text',this.value);document.getElementById('gs-col-text').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="field-label">TEXT DIM COLOR</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="gs-col-textdim" value="#aaaaaa" oninput="document.documentElement.style.setProperty('--text-dim',this.value);gsSaveColors();" style="width:36px;height:28px;padding:2px;border-radius:3px;cursor:pointer;">
+            <input type="text" id="gs-col-textdim-txt" value="#aaaaaa" oninput="document.documentElement.style.setProperty('--text-dim',this.value);document.getElementById('gs-col-textdim').value=this.value;gsSaveColors();" style="flex:1;font-size:0.68rem;">
+          </div>
+        </div>
+      </div>
+      <button onclick="gsResetColors()" style="font-size:0.62rem;margin-bottom:14px;padding:4px 10px;border-color:var(--text-dim);color:var(--text-dim);">↺ RESET TO THEME DEFAULTS</button>
+
+      <!-- SECTION: TYPOGRAPHY -->
+      <div style="font-size:0.66rem;color:var(--accent);letter-spacing:0.12em;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;margin:4px 0 12px;">▸ TYPOGRAPHY</div>
+      <div class="config-grid">
+        <div class="field-row">
+          <label class="field-label">CUSTOM FONT FAMILY</label>
+          <input type="text" id="gs-font" placeholder="'Courier New', monospace" oninput="document.documentElement.style.setProperty('--font',this.value);gsSaveFont();">
+        </div>
+        <div class="field-row">
+          <label class="field-label">BASE FONT SIZE (rem)</label>
+          <input type="text" id="gs-fontsz" placeholder="0.88rem" oninput="document.documentElement.style.setProperty('--font-sz',this.value);gsSaveFont();">
+        </div>
+        <div class="field-row">
+          <label class="field-label">BORDER RADIUS</label>
+          <select id="gs-radius" onchange="document.documentElement.style.setProperty('--radius',this.value);cfg.radius=this.value;saveCfg()">
+            <option value="1px">Sharp (1px)</option>
+            <option value="4px">Slight (4px)</option>
+            <option value="8px">Rounded (8px)</option>
+            <option value="14px">Pill (14px)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SECTION: DATA & PRIVACY -->
+      <div style="font-size:0.66rem;color:var(--accent);letter-spacing:0.12em;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;margin:14px 0 12px;">▸ DATA & PRIVACY</div>
+      <div class="config-grid">
+        <div class="field-row" style="grid-column:1/-1;">
+          <label class="field-label">CUSTOM ENTRIES</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:0.7rem;color:var(--text);">Custom: <strong id="gs-count">0</strong> · Built-in: <strong id="gs-builtin">0</strong></span>
+            <button class="btn-danger" onclick="wipeCustom()" style="font-size:0.62rem;padding:4px 9px;">WIPE CUSTOM DATA</button>
+          </div>
+        </div>
+        <div class="field-row" style="grid-column:1/-1;">
+          <label class="field-label">FACTORY RESET</label>
+          <button class="btn-danger" onclick="wipeAll()" style="font-size:0.62rem;padding:4px 9px;">FULL FACTORY RESET (wipes all localStorage)</button>
+        </div>
+      </div>
+
+      <!-- SECTION: EXPORT WITH SETTINGS BAKED IN -->
+      <div style="font-size:0.66rem;color:var(--accent);letter-spacing:0.12em;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;margin:14px 0 12px;">▸ SAVE VERSION WITH SETTINGS</div>
+      <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:10px;">Download a copy of JAC with your current settings baked into the HTML as defaults. Your data and theme choices travel with the file.</div>
+      <button onclick="exportWithSettings()" style="background:var(--hi);color:#000;border:none;padding:8px 18px;font-family:var(--font);font-size:0.72rem;font-weight:bold;cursor:pointer;letter-spacing:0.08em;">⬇ SAVE COPY WITH MY SETTINGS</button>
+
+      <button style="margin-top:18px;display:block;" onclick="closeOverlay('global-settings-overlay')">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- ══ OVERLAY: DATA LAB ══ -->
+  <div id="datalab-overlay" class="overlay" style="display:none;">
+    <div class="overlay-inner" style="width:min(98%,1100px);max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+      <!-- Header bar -->
+      <div style="padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--panel);">
+        <div>
+          <h2 style="color:var(--accent);margin:0;font-size:1.05rem;letter-spacing:0.12em;">⬡ DATA LAB</h2>
+          <div style="font-size:0.62rem;color:var(--text-dim);margin-top:2px;">ADVANCED DATA EDITOR · ARRAY MANAGER · CORPUS STATISTICS</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="dl-compile-btn" style="background:var(--hi);color:#000;border:none;padding:6px 14px;font-family:var(--font);font-size:0.72rem;font-weight:bold;cursor:pointer;letter-spacing:0.08em;" onclick="dataLabCompile()">⬇ COMPILE + DOWNLOAD</button>
+          <button onclick="closeOverlay('datalab-overlay')" style="font-size:0.72rem;padding:5px 12px;">✕ CLOSE</button>
+        </div>
+      </div>
+
+      <!-- Tab bar -->
+      <div id="dl-tabs" style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;overflow-x:auto;background:rgba(0,0,0,0.3);">
+        <button class="dl-tab dl-tab-active" onclick="dlShowTab('stats')" id="dlt-stats">📊 STATS</button>
+        <button class="dl-tab" onclick="dlShowTab('edu')" id="dlt-edu">📚 EDU CORPUS</button>
+        <button class="dl-tab" onclick="dlShowTab('lang')" id="dlt-lang">🌍 LANGUAGES</button>
+        <button class="dl-tab" onclick="dlShowTab('phrases')" id="dlt-phrases">💬 PHRASES</button>
+        <button class="dl-tab" onclick="dlShowTab('cities')" id="dlt-cities">🏙 CITIES</button>
+        <button class="dl-tab" onclick="dlShowTab('tickers')" id="dlt-tickers">📈 TICKERS</button>
+        <button class="dl-tab" onclick="dlShowTab('facts')" id="dlt-facts">💡 NJ FACTS</button>
+        <button class="dl-tab" onclick="dlShowTab('lexicon')" id="dlt-lexicon">📖 LEXICON</button>
+        <button class="dl-tab" onclick="dlShowTab('roots')" id="dlt-roots">🌱 ROOTS</button>
+        <button class="dl-tab" onclick="dlShowTab('raw')" id="dlt-raw">⚙ RAW JSON</button>
+      </div>
+
+      <!-- Content area -->
+      <div id="dl-content" style="flex:1;overflow-y:auto;padding:16px;"></div>
+    </div>
+  </div>
+
+  <style>
+  .dl-tab {
+    background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--text-dim);font-family:var(--font);font-size:0.66rem;
+    padding:8px 14px;cursor:pointer;white-space:nowrap;letter-spacing:0.06em;
+    transition:color 0.15s,border-color 0.15s;
+  }
+  .dl-tab:hover { color:var(--text); border-bottom-color:rgba(255,255,255,0.2); }
+  .dl-tab-active { color:var(--accent) !important; border-bottom-color:var(--accent) !important; }
+
+  .dl-stat-grid {
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:18px;
+  }
+  .dl-stat-card {
+    background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1);
+    border-left:3px solid var(--border);padding:10px 12px;
+  }
+  .dl-stat-card .dl-stat-n { font-size:1.8rem;font-weight:bold;color:var(--hi);line-height:1; }
+  .dl-stat-card .dl-stat-l { font-size:0.62rem;color:var(--text-dim);margin-top:3px;letter-spacing:0.08em; }
+  .dl-stat-card .dl-stat-sub { font-size:0.6rem;color:var(--border);margin-top:2px; }
+
+  .dl-section-head {
+    font-size:0.68rem;letter-spacing:0.12em;color:var(--accent);
+    border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:6px;margin:0 0 12px;
+  }
+  .dl-row {
+    display:grid;gap:6px;margin-bottom:8px;background:rgba(0,0,0,0.2);
+    border-left:2px solid var(--border);padding:8px 10px;
+  }
+  .dl-row input, .dl-row textarea, .dl-row select {
+    background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);
+    color:var(--text);font-family:var(--font);font-size:0.74rem;
+    padding:4px 7px;width:100%;box-sizing:border-box;resize:vertical;
+  }
+  .dl-row textarea { min-height:48px; }
+  .dl-row-meta { font-size:0.6rem;color:var(--text-dim);margin-bottom:3px; }
+  .dl-add-btn {
+    width:100%;margin-top:10px;padding:8px;
+    background:rgba(0,255,168,0.08);border:1px dashed var(--hi);
+    color:var(--hi);font-family:var(--font);font-size:0.72rem;cursor:pointer;
+    letter-spacing:0.08em;
+  }
+  .dl-add-btn:hover { background:rgba(0,255,168,0.15); }
+  .dl-del-btn {
+    background:rgba(255,0,80,0.1);border:1px solid rgba(255,0,80,0.3);
+    color:#ff5060;font-family:var(--font);font-size:0.62rem;padding:2px 8px;cursor:pointer;
+  }
+  .dl-del-btn:hover { background:rgba(255,0,80,0.2); }
+  .dl-search {
+    background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);
+    color:var(--text);font-family:var(--font);font-size:0.76rem;
+    padding:6px 10px;width:100%;box-sizing:border-box;margin-bottom:12px;
+  }
+  .dl-badge {
+    display:inline-block;font-size:0.55rem;padding:1px 5px;
+    border-radius:2px;margin-left:4px;vertical-align:middle;
+    background:rgba(255,255,255,0.1);color:var(--text-dim);
+  }
+  .dl-flag-pill {
+    display:inline-block;font-size:0.58rem;padding:1px 6px;
+    background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3);
+    color:var(--hi);margin:1px;cursor:pointer;
+  }
+  .dl-flag-pill.active { background:rgba(57,255,20,0.3); }
+  .dl-tip {
+    font-size:0.62rem;color:var(--text-dim);
+    border-left:3px solid var(--border);padding:6px 10px;
+    background:rgba(0,0,0,0.2);margin-bottom:12px;line-height:1.7;
+  }
+  .dl-compile-flash {
+    animation: dlFlash 0.5s ease;
+  }
+  @keyframes dlFlash {
+    0%   { box-shadow:0 0 0 0 var(--hi); }
+    50%  { box-shadow:0 0 20px 4px var(--hi); }
+    100% { box-shadow:0 0 0 0 var(--hi); }
+  }
+  
+/* ── INLINE TAG CLOUD (chat panel) ── */
+#inline-tag-cloud .hashtag {
+  display:inline-block;
+  cursor:pointer;
+  transition:background 0.12s, color 0.12s;
+}
+#tag-cloud-btn.active {
+  background: var(--hi);
+  color: #000;
+}
+</style>
+
   <!-- ══ OVERLAY: HELP ══ -->
   <div id="help-overlay" class="overlay">
     <div class="overlay-inner" style="width:min(95%,880px)">
@@ -2143,8 +2522,8 @@ body.printing a           { color: #111 !important; }
         </div>
 
         <div style="border:1px solid rgba(255,255,255,0.12);padding:10px;line-height:1.75;grid-column:1/-1;">
-          <strong style="color:var(--hi);display:block;margin-bottom:5px;">NOTES — WRITING TOOLS</strong>
-          The NOTES tab has three rule-based writing improvement tools. Select text in the textarea, then:
+          <strong style="color:var(--hi);display:block;margin-bottom:5px;">WRITER — WRITING TOOLS</strong>
+          The WRITER tab has three rule-based writing improvement tools. Select text in the textarea, then:
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;">
             <span><strong style="color:var(--text)">GRAMMAR</strong> — flags passive voice, repeated words, filler words, weak intensifiers, run-on sentences, comma splices. Browser spell-check (red underlines) is always active.</span>
             <span><strong style="color:var(--text)">REWRITE</strong> — suggests concrete word-level and sentence-level substitutions. Click any suggestion to apply it. Targets vague phrases ("very good" → "excellent"), verbose constructions ("in order to" → "to"), and overly long sentences.</span>
@@ -3086,6 +3465,7 @@ let cfg = {
   } catch(e) {}
 
   applyConfig();
+  gsApplySaved();
   buildTagCloud();
   renderBookmarks();
   renderHistory();
@@ -3097,6 +3477,135 @@ let cfg = {
 function saveCfg() {
   try { localStorage.setItem('jac2_cfg', JSON.stringify(cfg)); } catch(e){}
 }
+
+// ── GLOBAL SETTINGS ─────────────────────────────────────
+function openGlobalSettings() {
+  // Sync all GS controls with current cfg state
+  const el = id => document.getElementById(id);
+  if (el('gs-name')) el('gs-name').value = cfg.name || '';
+  if (el('gs-latency')) el('gs-latency').value = cfg.latency || 350;
+  if (el('gs-maxres')) el('gs-maxres').value = cfg.maxResults || 6;
+  if (el('gs-ts')) el('gs-ts').value = cfg.showTimestamp ? '1' : '0';
+  if (el('gs-lang')) el('gs-lang').value = APP_LANG || 'en';
+  if (el('gs-theme')) el('gs-theme').value = cfg.theme || '';
+  for (let o of (el('gs-fsize')||{options:[]}).options) if (o.value === cfg.fontSize) o.selected = true;
+  for (let o of (el('gs-bloom')||{options:[]}).options) if (o.value === cfg.bloom) o.selected = true;
+  for (let o of (el('gs-scan')||{options:[]}).options) if (o.value === cfg.scanlines) o.selected = true;
+  if (el('gs-count')) el('gs-count').textContent = customData ? customData.length : 0;
+  if (el('gs-builtin')) el('gs-builtin').textContent = typeof INITIAL_DATA !== 'undefined' ? INITIAL_DATA.length : 0;
+  // Read current CSS vars and populate color pickers
+  const styles = getComputedStyle(document.documentElement);
+  const colorMap = {
+    'bg':'--bg','panel':'--panel','border':'--border','accent':'--accent',
+    'hi':'--hi','warn':'--warn','text':'--text','textdim':'--text-dim'
+  };
+  Object.entries(colorMap).forEach(([key, cssVar]) => {
+    const val = styles.getPropertyValue(cssVar).trim();
+    const picker = el('gs-col-'+key);
+    const txt = el('gs-col-'+key+'-txt');
+    if (picker && val) { try { picker.value = val; } catch(e){} }
+    if (txt && val) txt.value = val;
+  });
+  // Font
+  const fontEl = el('gs-font');
+  if (fontEl) fontEl.value = styles.getPropertyValue('--font').trim();
+  const fontSzEl = el('gs-fontsz');
+  if (fontSzEl) fontSzEl.value = styles.getPropertyValue('--font-sz').trim();
+  const radiusSel = el('gs-radius');
+  if (radiusSel) {
+    const r = styles.getPropertyValue('--radius').trim();
+    for (let o of radiusSel.options) if (o.value === r) o.selected = true;
+  }
+  openOverlay('global-settings-overlay');
+}
+
+function gsSync() {
+  // Keep GS panel in sync if open
+}
+
+function gsSaveColors() {
+  try {
+    const styles = getComputedStyle(document.documentElement);
+    const colors = {};
+    ['--bg','--panel','--border','--accent','--hi','--warn','--text','--text-dim'].forEach(v => {
+      colors[v] = styles.getPropertyValue(v).trim();
+    });
+    localStorage.setItem('jac2_colors', JSON.stringify(colors));
+  } catch(e){}
+}
+
+function gsSaveFont() {
+  try {
+    const styles = getComputedStyle(document.documentElement);
+    localStorage.setItem('jac2_font', styles.getPropertyValue('--font').trim());
+    localStorage.setItem('jac2_font_sz', styles.getPropertyValue('--font-sz').trim());
+  } catch(e){}
+}
+
+function gsResetColors() {
+  // Remove color overrides and re-apply current theme
+  ['--bg','--panel','--border','--accent','--hi','--warn','--text','--text-dim'].forEach(v => {
+    document.documentElement.style.removeProperty(v);
+  });
+  try { localStorage.removeItem('jac2_colors'); } catch(e){}
+  setTheme(cfg.theme, false);
+  openGlobalSettings(); // refresh pickers
+}
+
+function gsApplySaved() {
+  // Apply any saved color overrides on load
+  try {
+    const saved = localStorage.getItem('jac2_colors');
+    if (saved) {
+      const colors = JSON.parse(saved);
+      Object.entries(colors).forEach(([v, val]) => {
+        document.documentElement.style.setProperty(v, val);
+      });
+    }
+    const font = localStorage.getItem('jac2_font');
+    if (font) document.documentElement.style.setProperty('--font', font);
+    const fsz = localStorage.getItem('jac2_font_sz');
+    if (fsz) document.documentElement.style.setProperty('--font-sz', fsz);
+  } catch(e){}
+}
+
+function exportWithSettings() {
+  // Bake current settings into a downloadable HTML copy
+  let src = document.documentElement.outerHTML;
+  // Inject a settings block that overrides defaults on load
+  const styles = getComputedStyle(document.documentElement);
+  const overrides = ['--bg','--panel','--border','--accent','--hi','--warn','--text','--text-dim','--font','--font-sz','--bloom','--scan','--radius']
+    .map(v => {
+      const val = document.documentElement.style.getPropertyValue(v) || styles.getPropertyValue(v).trim();
+      return val ? `  ${v}: ${val};` : null;
+    }).filter(Boolean).join('\n');
+  const themeClass = document.body.className.match(/theme-[a-z]+/)?.[0] || '';
+  const settingsBlock = `<script>
+// ── BAKED SETTINGS (generated by SAVE COPY WITH MY SETTINGS) ──
+(function(){
+  try {
+    // CSS variable overrides
+    const vars = {
+${overrides.split('\n').map(l=>`    '${l.trim().split(':')[0].trim()}': '${l.trim().split(':').slice(1).join(':').trim().replace(';','')}'`).join(',\n')}
+    };
+    Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+    if ('${themeClass}') document.body.classList.add('${themeClass}');
+    // Baked cfg
+    const bakedCfg = ${JSON.stringify(cfg)};
+    try { if (!localStorage.getItem('jac2_cfg')) localStorage.setItem('jac2_cfg', JSON.stringify(bakedCfg)); } catch(e){}
+  } catch(e){}
+})();
+<\/script>`;
+  src = src.replace('</head>', settingsBlock + '</head>');
+  const blob = new Blob([src], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'JAC_custom_' + new Date().toISOString().slice(0,10) + '.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  if (typeof addSysMsg === 'function') addSysMsg('⬇ Saved copy with your settings baked in.');
+}
+
 
 function applyConfig() {
   setTheme(cfg.theme, false);
@@ -3189,14 +3698,14 @@ function updateConfigCounts() {
 // ── TABS ─────────────────────────────────────────────────
 function switchTab(name) {
   // Map legacy aliases so old code still works
-  const alias = {bookmarks:'saved', notes:'saved', history:'saved', games:'arcade'};
+  const alias = {bookmarks:'saved', notes:'writer', history:'saved', games:'arcade', tags:'chat'};
   const mapped = alias[name] || name;
   document.querySelectorAll('.tab').forEach(t =>
     t.classList.toggle('active', t.dataset.tab === mapped));
   document.querySelectorAll('.panel-view').forEach(p =>
     p.classList.toggle('active', p.id === 'panel-'+mapped));
   // Side-effects per panel
-  if (mapped === 'tags')   buildTagCloud();
+  if (mapped === 'chat')   { buildTagCloudInline(); }
   if (mapped === 'editor') renderEditorTable('');
   if (mapped === 'lang')   { setTimeout(()=>{ eduPanelInit(); }, 0); }
   if (mapped === 'arcade') { initArcade(); setTimeout(arcShowLobby, 0); }
@@ -3204,7 +3713,7 @@ function switchTab(name) {
   if (mapped === 'music') { JT.panelInit(); }
   if (mapped === 'saved') {
     // open to the right sub-tab when called with legacy name
-    const sub = (name === 'notes') ? 'notes' : (name === 'history') ? 'history' : 'bookmarks';
+    const sub = (name === 'history') ? 'history' : 'bookmarks';
     savedSwitch(sub);
   }
 }
@@ -3255,6 +3764,7 @@ function openOverlay(id) {
   document.getElementById(id).style.display = 'flex';
   if (id === 'config-overlay') applyConfig();
   if (id === 'edit-overlay')   renderEditList();
+  if (id === 'datalab-overlay') openDataLab();
 }
 function closeOverlay(id) { document.getElementById(id).style.display = 'none'; }
 function closeAllOverlays() {
@@ -3624,6 +4134,9 @@ function clearHistory() {
 
 // ── NOTES ─────────────────────────────────────────────────
 function notesEditor(){return document.getElementById('notes-editor');}
+// contenteditable div has no .value — use innerText for plain-text reads
+function getEditorText(){const el=notesEditor();return el?el.innerText:'';}
+function setEditorText(txt){const el=notesEditor();if(el){el.innerText=txt;saveNotes();}}
 
 function saveNotes(){
   try{localStorage.setItem('jac2_notes_html', notesEditor().innerHTML);}catch(e){}
@@ -3786,8 +4299,7 @@ function sentenceLengthIssues(text) {
 }
 
 function runGrammarCheck() {
-  const ta = notesEditor();
-  const text = ta.value;
+  const text = getEditorText();
   if (!text.trim()) { alert('Nothing to check.'); return; }
   document.querySelectorAll('.notes-tool-btn').forEach(b => b.classList.remove('active'));
   event.currentTarget.classList.add('active');
@@ -4019,8 +4531,7 @@ function suggestSentenceSplits(text) {
 }
 
 function runRewrite() {
-  const ta = notesEditor();
-  const text = ta.value;
+  const text = getEditorText();
   if (!text.trim()) { alert('Nothing to rewrite.'); return; }
   document.querySelectorAll('.notes-tool-btn').forEach(b => b.classList.remove('active'));
   event.currentTarget.classList.add('active');
@@ -4072,16 +4583,17 @@ function runRewrite() {
 
 function applyRewrite(sub) {
   const ta = notesEditor();
-  // Replace first occurrence only (case-sensitive match from sub.find)
-  const idx = ta.value.indexOf(sub.find);
+  // contenteditable: work on innerText for find/replace, then restore
+  let text = ta.innerText;
+  const idx = text.indexOf(sub.find);
   if (idx === -1) {
     // Case-insensitive fallback
-    const lower = ta.value.toLowerCase();
+    const lower = text.toLowerCase();
     const lIdx = lower.indexOf(sub.find.toLowerCase());
     if (lIdx === -1) { addSysMsg('Suggestion no longer found in text.'); return; }
-    ta.value = ta.value.slice(0, lIdx) + sub.replace + ta.value.slice(lIdx + sub.find.length);
+    ta.innerText = text.slice(0, lIdx) + sub.replace + text.slice(lIdx + sub.find.length);
   } else {
-    ta.value = ta.value.slice(0, idx) + sub.replace + ta.value.slice(idx + sub.find.length);
+    ta.innerText = text.slice(0, idx) + sub.replace + text.slice(idx + sub.find.length);
   }
   saveNotes();
   runRewrite(); // Refresh suggestions
@@ -4295,8 +4807,7 @@ const FORMALISE_MAP = [
 ];
 
 function runFormalise() {
-  const ta = notesEditor();
-  const text = ta.value;
+  const text = getEditorText();
   if (!text.trim()) { alert('Nothing to formalise.'); return; }
   document.querySelectorAll('.notes-tool-btn').forEach(b => b.classList.remove('active'));
   event.currentTarget.classList.add('active');
@@ -4366,6 +4877,43 @@ function buildTagCloud() {
     cloud.appendChild(pill);
   });
 }
+
+function toggleTagCloud() {
+  const panel = document.getElementById('inline-tag-cloud');
+  const btn = document.getElementById('tag-cloud-btn');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (btn) {
+    btn.style.background = open ? 'transparent' : 'var(--hi)';
+    btn.style.color = open ? 'var(--hi)' : '#000';
+  }
+  if (!open) buildTagCloudInline();
+}
+
+function buildTagCloudInline() {
+  const container = document.getElementById('inline-tag-cloud-content');
+  if (!container) return;
+  // Collect all tags from all data
+  const tagCounts = {};
+  const allData = (typeof INITIAL_DATA !== 'undefined' ? INITIAL_DATA : []).concat(
+    typeof customData !== 'undefined' ? customData : []);
+  allData.forEach(entry => {
+    (entry.tags || []).forEach(tag => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    });
+  });
+  const sorted = Object.entries(tagCounts).sort((a,b) => b[1]-a[1]);
+  if (!sorted.length) { container.innerHTML = '<span style="color:var(--text-dim);font-size:0.65rem;">No tags yet.</span>'; return; }
+  const max = sorted[0][1], min = sorted[sorted.length-1][1];
+  container.innerHTML = sorted.map(([tag, count]) => {
+    const ratio = max === min ? 0.5 : (count - min) / (max - min);
+    const sz = (0.62 + ratio * 0.46).toFixed(2);
+    const op = (0.55 + ratio * 0.45).toFixed(2);
+    return `<span class="hashtag" style="font-size:${sz}rem;opacity:${op};cursor:pointer;margin:2px 3px;display:inline-block;" onclick="document.getElementById('user-input').value='#${tag}';toggleTagCloud();handleSend();">#${tag} <span style="font-size:0.58rem;opacity:0.5;">(${count})</span></span>`;
+  }).join('');
+}
+
 
 // ── SEARCH ENGINE ────────────────────────────────────────
 function tokenize(str) {
@@ -4859,12 +5407,12 @@ let APP_LANG = (()=>{ try{return localStorage.getItem('jac_app_lang')||'en';}cat
 const UI_STRINGS = {
   en: {
     // nav
-    panic:'PANIC', kyr:'KYR', config:'CONFIG', compile:'COMPILE',
+    panic:'PANIC', kyr:'KYR', config:'THEME', compile:'COMPILE',
     media:'▶ MEDIA', dataimport:'＋ DATA IMPORT', feedingest:'↓ FEED INGEST',
     print:'⎙ PRINT', help:'? HELP', about:'ℹ ABOUT',
     // tabs
-    tab_chat:'CHAT', tab_find:'FIND', tab_saved:'SAVED',
-    tab_data:'DATA', tab_lang:'📖 LEARNING', tab_arcade:'▶ ARCADE',
+    tab_chat:'CHAT', tab_writer:'✎ WRITER', tab_lang:'📖 LEARNING',
+    tab_arcade:'▶ ARCADE', tab_data:'DATA', tab_community:'🏘 COMMUNITY', tab_music:'♪ MUSIC',
     // saved sub-tabs
     saved_bm:'★ BOOKMARKS', saved_notes:'✎ NOTES', saved_hist:'⟳ HISTORY',
     // chat
@@ -4874,7 +5422,7 @@ const UI_STRINGS = {
     arc_select:'SELECT A GAME BELOW',
     arc_play:'PLAY ▶',
     // notes
-    notes_label:'NOTES · auto-saved',
+    notes_label:'WRITER · auto-saved',
     notes_grammar:'GRAMMAR', notes_rewrite:'REWRITE',
     notes_formalise:'FORMALISE', notes_clear:'CLEAR',
     // data editor
@@ -4883,17 +5431,17 @@ const UI_STRINGS = {
     close:'CLOSE', cancel:'CANCEL', save:'SAVE',
   },
   es: {
-    panic:'PÁNICO', kyr:'DDH', config:'CONFIG', compile:'COMPILAR',
+    panic:'PÁNICO', kyr:'DDH', config:'THEME', compile:'COMPILAR',
     media:'▶ MEDIA', dataimport:'＋ IMPORTAR DATOS', feedingest:'↓ INGERIR FEED',
     print:'⎙ IMPRIMIR', help:'? AYUDA', about:'ℹ ACERCA',
-    tab_chat:'CHAT', tab_find:'BUSCAR', tab_saved:'GUARDADO',
-    tab_data:'DATOS', tab_lang:'📖 LEARNING', tab_arcade:'▶ ARCADE',
+    tab_chat:'CHAT', tab_writer:'✎ REDACTOR', tab_lang:'📖 LEARNING',
+    tab_arcade:'▶ ARCADE', tab_data:'DATOS', tab_community:'🏘 COMMUNITY', tab_music:'♪ MUSIC',
     saved_bm:'★ FAVORITOS', saved_notes:'✎ NOTAS', saved_hist:'⟳ HISTORIAL',
     input_placeholder:'Consulta el Colectivo, ingresa una ecuación o escribe un #tag…',
     send:'ENVIAR',
     arc_select:'SELECCIONA UN JUEGO',
     arc_play:'JUGAR ▶',
-    notes_label:'NOTAS · guardado auto',
+    notes_label:'REDACTOR · auto-guardado',
     notes_grammar:'GRAMÁTICA', notes_rewrite:'REESCRIBIR',
     notes_formalise:'FORMALIZAR', notes_clear:'BORRAR',
     data_editor_title:'EDITOR DE DATOS',
@@ -4917,8 +5465,8 @@ function applyAppLang() {
   if (btn) { btn.textContent = APP_LANG === 'es' ? 'ENGLISH' : 'ESPAÑOL'; btn.style.background = APP_LANG === 'es' ? 'rgba(255,238,68,0.15)' : '#ffee44'; btn.style.color = APP_LANG === 'es' ? '#ffee44' : '#111'; }
 
   // Tabs
-  const tabMap = {chat:'tab_chat',tags:'tab_find',saved:'tab_saved',
-                  editor:'tab_data',lang:'tab_lang',arcade:'tab_arcade'};
+  const tabMap = {chat:'tab_chat',writer:'tab_writer',lang:'tab_lang',
+                  arcade:'tab_arcade',community:'tab_community',music:'tab_music',editor:'tab_data'};
   document.querySelectorAll('.tab[data-tab]').forEach(el => {
     const key = tabMap[el.dataset.tab];
     if (key) el.textContent = t(key);
@@ -8552,6 +9100,614 @@ function exportJSON() {
   a.download = 'JAC_custom_data_' + Date.now() + '.json';
   a.click();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA LAB — Advanced Data Editor / Array Manager / Stats Dashboard
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Runtime shadow arrays (deep copies, editable without touching source consts)
+let _dlShadow = {
+  EDU_MATRIX: null,   // [term, def, root, diff, flags[]]
+  EDU_ROOTS: null,    // [root, lang, meaning, example]
+  PHRASES: null,      // [EN,ES,FR,IT,DE,LA,cat]
+  CITIES_RAW: null,   // "City,Loc,Pop|..."
+  TICKERS_RAW: null,  // "SYM,Name,Sector|..."
+  _FACTS: null,       // string[]
+  _LEXICON_WORDS: null, // {word,def}[]
+  LANG_DRILL_LANGS: null, // {code,name,flag,idx}[]
+};
+
+function _dlInit() {
+  if (!_dlShadow.EDU_MATRIX) {
+    _dlShadow.EDU_MATRIX = JSON.parse(JSON.stringify(EDU_MATRIX));
+    _dlShadow.EDU_ROOTS = JSON.parse(JSON.stringify(EDU_ROOTS));
+    _dlShadow.PHRASES = JSON.parse(JSON.stringify(PHRASES));
+    _dlShadow.CITIES_RAW = CITIES_RAW;
+    _dlShadow.TICKERS_RAW = TICKERS_RAW;
+    _dlShadow._FACTS = [..._FACTS];
+    _dlShadow._LEXICON_WORDS = JSON.parse(JSON.stringify(_LEXICON_WORDS));
+    _dlShadow.LANG_DRILL_LANGS = JSON.parse(JSON.stringify(LANG_DRILL_LANGS));
+  }
+}
+
+let _dlCurrentTab = 'stats';
+
+function openDataLab() {
+  _dlInit();
+  closeAllOverlays();
+  document.getElementById('datalab-overlay').style.display = 'flex';
+  dlShowTab('stats');
+}
+
+function dlShowTab(tab) {
+  _dlCurrentTab = tab;
+  document.querySelectorAll('.dl-tab').forEach(t => t.classList.remove('dl-tab-active'));
+  const btn = document.getElementById('dlt-' + tab);
+  if (btn) btn.classList.add('dl-tab-active');
+  const c = document.getElementById('dl-content');
+  switch(tab) {
+    case 'stats':   c.innerHTML = dlRenderStats(); break;
+    case 'edu':     c.innerHTML = dlRenderEdu(); dlBindEdu(); break;
+    case 'lang':    c.innerHTML = dlRenderLang(); break;
+    case 'phrases': c.innerHTML = dlRenderPhrases(); break;
+    case 'cities':  c.innerHTML = dlRenderCities(); break;
+    case 'tickers': c.innerHTML = dlRenderTickers(); break;
+    case 'facts':   c.innerHTML = dlRenderFacts(); dlBindFacts(); break;
+    case 'lexicon': c.innerHTML = dlRenderLexicon(); dlBindLexicon(); break;
+    case 'roots':   c.innerHTML = dlRenderRoots(); dlBindRoots(); break;
+    case 'raw':     c.innerHTML = dlRenderRaw(); break;
+  }
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function _dlStatCard(n, label, sub) {
+  return '<div class="dl-stat-card"><div class="dl-stat-n">'+n+'<\/div><div class="dl-stat-l">'+label+'<\/div><div class="dl-stat-sub">'+sub+'<\/div><\/div>';
+}
+function dlRenderStats() {
+  const edu = _dlShadow.EDU_MATRIX;
+  const byTier = {g5:0,psat:0,sat:0,gre:0,mcat:0,lsat:0};
+  edu.forEach(function(r){ var f=r[4]||[]; f.forEach(function(t){ if(byTier[t]!==undefined) byTier[t]++; }); });
+  const cities = _dlShadow.CITIES_RAW.split('|').filter(Boolean);
+  const tickers = _dlShadow.TICKERS_RAW.split('|').filter(Boolean);
+  const phrases = _dlShadow.PHRASES.map(function(p){ return _phraseNorm(p); }).filter(Boolean);
+  const roots = _dlShadow.EDU_ROOTS;
+  const langs = _dlShadow.LANG_DRILL_LANGS;
+  const cats = {};
+  phrases.forEach(function(p){ var c=p[6]||'?'; cats[c]=(cats[c]||0)+1; });
+
+  // Build stat grid
+  var statCards = [
+    _dlStatCard(edu.length,    'EDU VOCAB TERMS',  'All test tiers combined'),
+    _dlStatCard(byTier.g5,     'GRADE 5\u20138',   'Academic foundation'),
+    _dlStatCard(byTier.psat,   'PSAT',             'Pre-SAT vocabulary'),
+    _dlStatCard(byTier.sat,    'SAT / ACT',        'College admissions'),
+    _dlStatCard(byTier.gre,    'GRE',              'Graduate mastery'),
+    _dlStatCard(byTier.mcat,   'MCAT',             'Pre-med science'),
+    _dlStatCard(byTier.lsat,   'LSAT',             'Legal reasoning'),
+    _dlStatCard(roots.length,  'WORD ROOTS',       'Etymology database'),
+    _dlStatCard(phrases.length,'PHRASES',          langs.length+' languages'),
+    _dlStatCard(langs.length,  'LANGUAGES',        'In phrasebook'),
+    _dlStatCard(cities.length, 'CITIES',           'World population db'),
+    _dlStatCard(tickers.length,'TICKERS',          'Fortune 500 / stocks'),
+    _dlStatCard(_dlShadow._FACTS.length,       'NJ FACTS',    'World Factbook data'),
+    _dlStatCard(_dlShadow._LEXICON_WORDS.length,'LEXICON WORDS','Radical vocabulary'),
+  ].join('');
+
+  // Category pills
+  var catHtml = Object.entries(cats).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+    return '<div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);padding:4px 10px;font-size:0.65rem;">'
+      +'<span style="color:var(--text)">'+e[0]+'<\/span> <span style="color:var(--hi)">'+e[1]+'<\/span><\/div>';
+  }).join('');
+
+  // Difficulty histogram
+  var bins={1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0};
+  edu.forEach(function(r){ var d=Math.min(10,Math.max(1,r[3]||1)); bins[d]++; });
+  var maxBin=Math.max.apply(null,Object.values(bins));
+  var barHtml = Object.entries(bins).map(function(e){
+    var d=e[0], n=e[1], h=Math.round(50*(n/maxBin))+4, op=(0.3+0.7*(n/maxBin)).toFixed(2);
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">'
+      +'<div style="font-size:0.55rem;color:var(--hi)">'+n+'<\/div>'
+      +'<div style="width:100%;background:var(--hi);opacity:'+op+';height:'+h+'px;"><\/div>'
+      +'<div style="font-size:0.55rem;color:var(--text-dim)">D'+d+'<\/div>'
+      +'<\/div>';
+  }).join('');
+
+  var out = '<div class="dl-section-head">CORPUS OVERVIEW<\/div>';
+  out += '<div class="dl-stat-grid">'+statCards+'<\/div>';
+  out += '<div class="dl-section-head" style="margin-top:8px;">PHRASE CATEGORIES ('+Object.keys(cats).length+' cats)<\/div>';
+  out += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;">'+catHtml+'<\/div>';
+  out += '<div class="dl-section-head">EDU DIFFICULTY DISTRIBUTION<\/div>';
+  out += '<div style="display:flex;gap:4px;align-items:flex-end;height:80px;margin-bottom:18px;">'+barHtml+'<\/div>';
+  out += '<div class="dl-tip"><strong style="color:var(--text);">\u26ac DATA LAB GUIDE<\/strong><br>'
+       + 'Edit any array using the tabs above. Changes are held in memory. '
+       + 'Use <strong style="color:var(--hi)">\u2b07 COMPILE + DOWNLOAD<\/strong> to bake all edits into a new self-contained HTML file. '
+       + 'The download replaces every source constant with your edited version \u2014 no data is lost.<\/div>';
+  return out;
+}
+
+// ── EDU CORPUS ────────────────────────────────────────────
+const EDU_TIERS = ['g5','psat','sat','gre','mcat','lsat'];
+let _dlEduFilter = '';
+
+function dlRenderEdu() {
+  const edu = _dlShadow.EDU_MATRIX;
+  var h = '<div class="dl-section-head">EDU MATRIX \u2014 '+edu.length+' TERMS'
+        + '<span class="dl-badge">Schema: [term, definition, root-hint, difficulty 1-10, [test-flags]]<\/span><\/div>'
+        + '<div class="dl-tip">Flags control which test tiers a word appears in. Difficulty 1=easy, 10=hardest. Root-hint shows etymology.<\/div>'
+        + '<input class="dl-search" id="dl-edu-search" placeholder="\uD83D\uDD0D Filter terms..." oninput="dlEduSearch(this.value)">'
+        + '<div id="dl-edu-list"><\/div>'
+        + '<button class="dl-add-btn" onclick="dlEduAdd()">\uFF0B ADD NEW TERM<\/button>';
+  return h;
+}
+
+function dlBindEdu() {
+  dlEduRenderList(_dlEduFilter);
+}
+
+function dlEduSearch(v) {
+  _dlEduFilter = v.toLowerCase();
+  dlEduRenderList(_dlEduFilter);
+}
+
+function dlEduRenderList(filter) {
+  const list = document.getElementById('dl-edu-list');
+  if (!list) return;
+  const edu = _dlShadow.EDU_MATRIX;
+  const visible = filter
+    ? edu.map((r,i)=>({r,i})).filter(({r})=>r[0].toLowerCase().includes(filter)||r[1].toLowerCase().includes(filter))
+    : edu.map((r,i)=>({r,i})).slice(0,80);
+  const more = !filter && edu.length > 80;
+  list.innerHTML = visible.map(function({r,i}){
+    var flagPills = EDU_TIERS.map(function(t){
+      var active = (r[4]||[]).includes(t) ? ' active' : '';
+      return '<span class="dl-flag-pill'+active+'" onclick="dlEduToggleFlag('+i+',\''+t+'\',this)">'+t+'<\/span>';
+    }).join('');
+    return '<div class="dl-row" style="grid-template-columns:1fr 2fr 1fr auto auto;">'
+      +'<div><div class="dl-row-meta">TERM<\/div><input value="'+esc(r[0])+'" onchange="_dlShadow.EDU_MATRIX['+i+'][0]=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">DEFINITION<\/div><input value="'+esc(r[1])+'" onchange="_dlShadow.EDU_MATRIX['+i+'][1]=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">ROOT HINT<\/div><input value="'+esc(r[2]||'')+'" onchange="_dlShadow.EDU_MATRIX['+i+'][2]=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">DIFF<\/div><input type="number" min="1" max="10" value="'+(r[3]||2)+'" style="width:50px;" onchange="_dlShadow.EDU_MATRIX['+i+'][3]=+this.value"><\/div>'
+      +'<div style="min-width:210px;"><div class="dl-row-meta">TEST FLAGS<\/div><div>'+flagPills+'<\/div><\/div>'
+      +'<button class="dl-del-btn" onclick="dlEduDel('+i+')" style="align-self:center;">\u2715<\/button>'
+      +'<\/div>';
+  }).join('') + (more ? '<div style="font-size:0.65rem;color:var(--text-dim);padding:8px;">Showing first 80 of '+edu.length+' \u2014 use search to filter<\/div>' : '');
+}
+
+function dlEduToggleFlag(idx, tier, el) {
+  const flags = _dlShadow.EDU_MATRIX[idx][4] || [];
+  const fi = flags.indexOf(tier);
+  if (fi === -1) { flags.push(tier); el.classList.add('active'); }
+  else { flags.splice(fi,1); el.classList.remove('active'); }
+  _dlShadow.EDU_MATRIX[idx][4] = flags;
+}
+
+function dlEduDel(idx) {
+  _dlShadow.EDU_MATRIX.splice(idx, 1);
+  dlEduRenderList(_dlEduFilter);
+  document.querySelector('.dl-section-head').textContent = `EDU MATRIX — ${_dlShadow.EDU_MATRIX.length} TERMS`;
+}
+
+function dlEduAdd() {
+  _dlShadow.EDU_MATRIX.push(['new-term','Definition here','Latin origin',3,['sat']]);
+  _dlEduFilter = 'new-term';
+  const s = document.getElementById('dl-edu-search');
+  if (s) s.value = 'new-term';
+  dlEduRenderList('new-term');
+}
+
+// ── LANGUAGES ─────────────────────────────────────────────
+function dlRenderLang() {
+  const langs = _dlShadow.LANG_DRILL_LANGS;
+  var rows = langs.map(function(l,i){
+    return '<div class="dl-row" style="grid-template-columns:80px 160px 60px 60px auto;">'
+      +'<div><div class="dl-row-meta">CODE<\/div><input value="'+esc(l.code)+'" onchange="_dlShadow.LANG_DRILL_LANGS['+i+'].code=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">NAME<\/div><input value="'+esc(l.name)+'" onchange="_dlShadow.LANG_DRILL_LANGS['+i+'].name=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">FLAG<\/div><input value="'+esc(l.flag)+'" onchange="_dlShadow.LANG_DRILL_LANGS['+i+'].flag=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">IDX<\/div><input type="number" value="'+l.idx+'" style="width:50px;" onchange="_dlShadow.LANG_DRILL_LANGS['+i+'].idx=+this.value"><\/div>'
+      +'<button class="dl-del-btn" onclick="_dlShadow.LANG_DRILL_LANGS.splice('+i+',1);dlShowTab(\'lang\')" style="align-self:center;">\u2715<\/button>'
+      +'<\/div>';
+  }).join('');
+  return '<div class="dl-section-head">LANGUAGE DRILL REGISTRY \u2014 '+langs.length+' LANGUAGES<\/div>'
+       + '<div class="dl-tip">These are the languages available in the phrasebook and translation drill. code = BCP-47 code, flag = emoji flag.<\/div>'
+       + rows
+       + '<button class="dl-add-btn" onclick="_dlShadow.LANG_DRILL_LANGS.push({code:\'xx\',name:\'New Language\',flag:\'\uD83C\uDFF3\',idx:'+langs.length+'});dlShowTab(\'lang\')">\uFF0B ADD LANGUAGE<\/button>';
+}
+
+// ── PHRASES ───────────────────────────────────────────────
+let _dlPhraseFilter = '';
+function dlRenderPhrases() {
+  const phrases = _dlShadow.PHRASES.map(function(p,i){ return {p:_phraseNorm(p),i:i}; }).filter(function(x){ return x.p; });
+  const cats = [];
+  phrases.forEach(function(x){ if(x.p[6]&&!cats.includes(x.p[6])) cats.push(x.p[6]); });
+  cats.sort();
+  var catOpts = cats.map(function(c){ return '<option value="'+esc(c)+'">'+c+'<\/option>'; }).join('');
+  var out = '<div class="dl-section-head">PHRASE BANK \u2014 '+phrases.length+' PHRASES<span class="dl-badge">Schema: [EN, ES, FR, IT, DE, LA, category]<\/span><\/div>'
+    + '<div class="dl-tip">Each row is one phrase in up to 6 languages. Leave a field blank if translation is unavailable. Category is used for drill filtering.<\/div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'
+    + '<input class="dl-search" id="dl-ph-search" placeholder="\uD83D\uDD0D Filter phrases..." style="flex:1;min-width:200px;margin-bottom:0;" oninput="dlPhraseSearch(this.value)">'
+    + '<select style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:var(--text);font-family:var(--font);font-size:0.74rem;padding:4px 8px;" onchange="dlPhraseSearch(document.getElementById(\'dl-ph-search\').value,this.value)">'
+    + '<option value="">All categories<\/option>'+catOpts+'<\/select><\/div>'
+    + '<div id="dl-ph-list">'+dlPhrasesHtml(phrases,'')+'<\/div>'
+    + '<button class="dl-add-btn" onclick="dlPhraseAdd()">\uFF0B ADD PHRASE ROW<\/button>';
+  return out;
+}
+
+function dlPhrasesHtml(phrases, filter, catFilter) {
+  const langs6 = ['EN','ES','FR','IT','DE','LA'];
+  var list = phrases;
+  if (filter) list = list.filter(function(x){ return x.p.some(function(v){ return typeof v==='string'&&v.toLowerCase().includes(filter); }); });
+  if (catFilter) list = list.filter(function(x){ return x.p[6]===catFilter; });
+  var shown = list.slice(0,60);
+  var rows = shown.map(function(item){
+    var p=item.p, i=item.i;
+    var cols = langs6.map(function(l,li){
+      return '<div><div class="dl-row-meta">'+l+'<\/div><input value="'+esc(p[li]||'')+'" onchange="dlPhraseSet('+i+','+li+',this.value)"><\/div>';
+    }).join('');
+    return '<div class="dl-row">'
+      +'<div style="display:grid;grid-template-columns:repeat(6,1fr) 150px auto;gap:6px;align-items:end;">'
+      +cols
+      +'<div><div class="dl-row-meta">CATEGORY<\/div><input value="'+esc(p[6]||'')+'" onchange="dlPhraseSet('+i+',6,this.value)"><\/div>'
+      +'<button class="dl-del-btn" onclick="dlPhraseDel('+i+')" style="align-self:flex-end;margin-bottom:1px;">\u2715<\/button>'
+      +'<\/div><\/div>';
+  }).join('');
+  return rows + (list.length > 60 ? '<div style="font-size:0.65rem;color:var(--text-dim);padding:8px;">Showing 60 of '+list.length+' \u2014 use filter to narrow<\/div>' : '');
+}
+
+function dlPhraseSearch(v, cat) {
+  _dlPhraseFilter = v.toLowerCase();
+  const phrases = _dlShadow.PHRASES.map((p,i)=>({p:_phraseNorm(p),i})).filter(x=>x.p);
+  document.getElementById('dl-ph-list').innerHTML = dlPhrasesHtml(phrases, _dlPhraseFilter, cat||'');
+}
+
+function dlPhraseSet(idx, col, val) {
+  const p = _dlShadow.PHRASES[idx];
+  if (!p) return;
+  const norm = _phraseNorm(p) || ['','','','','','',''];
+  norm[col] = val;
+  _dlShadow.PHRASES[idx] = norm;
+}
+
+function dlPhraseDel(idx) {
+  _dlShadow.PHRASES.splice(idx,1);
+  dlShowTab('phrases');
+}
+
+function dlPhraseAdd() {
+  _dlShadow.PHRASES.push(['New phrase','','','','','','general']);
+  dlShowTab('phrases');
+  setTimeout(()=>{
+    const list = document.getElementById('dl-ph-list');
+    if (list) list.scrollTop = list.scrollHeight;
+  },100);
+}
+
+// ── CITIES ────────────────────────────────────────────────
+function dlRenderCities() {
+  const cities = _dlShadow.CITIES_RAW.split('|').filter(Boolean);
+  return '<div class="dl-section-head">CITIES DATABASE \u2014 '+cities.length+' CITIES<span class="dl-badge">Format: City,Country\/State,Population(M)<\/span><\/div>'
+    + '<div class="dl-tip">Population in millions (e.g. 8.34 = 8.34M). Country\/state code: US-NJ, JP, FR, etc.<\/div>'
+    + '<input class="dl-search" id="dl-city-search" placeholder="\uD83D\uDD0D Filter cities..." oninput="dlCitySearch(this.value)">'
+    + '<div id="dl-city-list">'+dlCitiesHtml(cities,'')+'<\/div>'
+    + '<button class="dl-add-btn" onclick="dlCityAdd()">\uFF0B ADD CITY<\/button>';
+}
+
+function dlCitiesHtml(cities, filter) {
+  var list = cities.map(function(r,i){ return {r:r,i:i}; });
+  if (filter) list = list.filter(function(x){ return x.r.toLowerCase().includes(filter); });
+  var rows = list.slice(0,100).map(function(x){
+    var r=x.r, i=x.i;
+    var parts = r.split(',');
+    return '<div class="dl-row" style="grid-template-columns:2fr 1fr 1fr auto;">'
+      +'<div><div class="dl-row-meta">CITY<\/div><input value="'+esc(parts[0]||'')+'" onchange="dlCitySetPart('+i+',0,this.value)"><\/div>'
+      +'<div><div class="dl-row-meta">COUNTRY\/STATE<\/div><input value="'+esc(parts[1]||'')+'" onchange="dlCitySetPart('+i+',1,this.value)"><\/div>'
+      +'<div><div class="dl-row-meta">POPULATION (M)<\/div><input type="number" step="0.01" value="'+(parts[2]||0)+'" onchange="dlCitySetPart('+i+',2,this.value)"><\/div>'
+      +'<button class="dl-del-btn" onclick="dlCityDel('+i+')" style="align-self:center;">\u2715<\/button>'
+      +'<\/div>';
+  }).join('');
+  return rows + (list.length > 100 ? '<div style="font-size:0.65rem;color:var(--text-dim);padding:8px;">Showing 100 of '+list.length+' \u2014 use filter<\/div>' : '');
+}
+
+function dlCitySearch(v) {
+  const cities = _dlShadow.CITIES_RAW.split('|').filter(Boolean);
+  document.getElementById('dl-city-list').innerHTML = dlCitiesHtml(cities, v.toLowerCase());
+}
+
+function dlCitySetPart(idx, part, val) {
+  const cities = _dlShadow.CITIES_RAW.split('|').filter(Boolean);
+  const parts = cities[idx].split(',');
+  parts[part] = val;
+  cities[idx] = parts.join(',');
+  _dlShadow.CITIES_RAW = cities.join('|');
+}
+
+function dlCityDel(idx) {
+  const cities = _dlShadow.CITIES_RAW.split('|').filter(Boolean);
+  cities.splice(idx,1);
+  _dlShadow.CITIES_RAW = cities.join('|');
+  dlShowTab('cities');
+}
+
+function dlCityAdd() {
+  _dlShadow.CITIES_RAW = _dlShadow.CITIES_RAW + '|New City,US-NJ,0.10';
+  dlShowTab('cities');
+}
+
+// ── TICKERS ───────────────────────────────────────────────
+function dlRenderTickers() {
+  const tickers = _dlShadow.TICKERS_RAW.split('|').filter(Boolean);
+  const sectors = [];
+  tickers.forEach(function(r){ var s=(r.split(',')[2]||'Other').trim(); if(!sectors.includes(s)) sectors.push(s); });
+  sectors.sort();
+  var secOpts = sectors.map(function(s){ return '<option value="'+esc(s)+'">'+s+'<\/option>'; }).join('');
+  return '<div class="dl-section-head">FORTUNE 500 TICKERS \u2014 '+tickers.length+' ENTRIES<span class="dl-badge">Format: TICKER,Company Name,Sector<\/span><\/div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'
+    + '<input class="dl-search" id="dl-tick-search" placeholder="\uD83D\uDD0D Filter tickers..." style="flex:1;min-width:180px;margin-bottom:0;" oninput="dlTickerSearch(this.value)">'
+    + '<select style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:var(--text);font-family:var(--font);font-size:0.74rem;padding:4px 8px;" onchange="dlTickerSearch(document.getElementById(\'dl-tick-search\').value,this.value)">'
+    + '<option value="">All sectors<\/option>'+secOpts+'<\/select><\/div>'
+    + '<div id="dl-tick-list">'+dlTickersHtml(tickers,'')+'<\/div>'
+    + '<button class="dl-add-btn" onclick="dlTickerAdd()">\uFF0B ADD TICKER<\/button>';
+}
+
+function dlTickersHtml(tickers, filter, sectorFilter) {
+  var list = tickers.map(function(r,i){ return {r:r,i:i}; });
+  if (filter) list = list.filter(function(x){ return x.r.toLowerCase().includes(filter); });
+  if (sectorFilter) list = list.filter(function(x){ return x.r.split(',')[2]===sectorFilter; });
+  var rows = list.slice(0,80).map(function(x){
+    var r=x.r, i=x.i;
+    var parts = r.split(',');
+    return '<div class="dl-row" style="grid-template-columns:100px 2fr 1fr auto;">'
+      +'<div><div class="dl-row-meta">TICKER<\/div><input value="'+esc(parts[0]||'')+'" onchange="dlTickerSetPart('+i+',0,this.value)"><\/div>'
+      +'<div><div class="dl-row-meta">COMPANY<\/div><input value="'+esc(parts[1]||'')+'" onchange="dlTickerSetPart('+i+',1,this.value)"><\/div>'
+      +'<div><div class="dl-row-meta">SECTOR<\/div><input value="'+esc(parts[2]||'')+'" onchange="dlTickerSetPart('+i+',2,this.value)"><\/div>'
+      +'<button class="dl-del-btn" onclick="dlTickerDel('+i+')" style="align-self:center;">\u2715<\/button>'
+      +'<\/div>';
+  }).join('');
+  return rows + (list.length > 80 ? '<div style="font-size:0.65rem;color:var(--text-dim);padding:8px;">Showing 80 of '+list.length+'<\/div>' : '');
+}
+
+function dlTickerSearch(v, sec) {
+  const tickers = _dlShadow.TICKERS_RAW.split('|').filter(Boolean);
+  document.getElementById('dl-tick-list').innerHTML = dlTickersHtml(tickers, v.toLowerCase(), sec||'');
+}
+
+function dlTickerSetPart(idx, part, val) {
+  const t = _dlShadow.TICKERS_RAW.split('|').filter(Boolean);
+  const parts = t[idx].split(',');
+  parts[part] = val;
+  t[idx] = parts.join(',');
+  _dlShadow.TICKERS_RAW = t.join('|');
+}
+
+function dlTickerDel(idx) {
+  const t = _dlShadow.TICKERS_RAW.split('|').filter(Boolean);
+  t.splice(idx,1);
+  _dlShadow.TICKERS_RAW = t.join('|');
+  dlShowTab('tickers');
+}
+
+function dlTickerAdd() {
+  _dlShadow.TICKERS_RAW = _dlShadow.TICKERS_RAW + '|NEW,New Company,Sector';
+  dlShowTab('tickers');
+}
+
+// ── NJ FACTS ──────────────────────────────────────────────
+function dlRenderFacts() {
+  return '<div class="dl-section-head">NJ \/ WORLD FACTBOOK \u2014 '+_dlShadow._FACTS.length+' FACTS<\/div>'
+    + '<div class="dl-tip">Each fact is a standalone string shown in the daily briefing, random selection, etc. Add world factbook replacement entries here.<\/div>'
+    + '<div id="dl-facts-list"><\/div>'
+    + '<button class="dl-add-btn" onclick="dlFactAdd()">\uFF0B ADD FACT<\/button>';
+}
+
+function dlBindFacts() { dlFactsRender(); }
+
+function dlFactsRender() {
+  const list = document.getElementById('dl-facts-list');
+  if (!list) return;
+  list.innerHTML = _dlShadow._FACTS.map(function(f,i){
+    return '<div class="dl-row" style="grid-template-columns:1fr auto;">'
+      +'<textarea onchange="_dlShadow._FACTS['+i+']=this.value" style="min-height:52px;">'+esc(f)+'<\/textarea>'
+      +'<button class="dl-del-btn" onclick="_dlShadow._FACTS.splice('+i+',1);dlFactsRender()" style="align-self:flex-start;margin-top:2px;">\u2715<\/button>'
+      +'<\/div>';
+  }).join('');
+}
+
+function dlFactAdd() {
+  _dlShadow._FACTS.push('New fact about NJ or the world...');
+  dlFactsRender();
+  var list = document.getElementById('dl-facts-list');
+  if (list && list.lastElementChild) list.lastElementChild.scrollIntoView({behavior:'smooth'});
+}
+
+// ── LEXICON ───────────────────────────────────────────────
+function dlRenderLexicon() {
+  return '<div class="dl-section-head">RADICAL LEXICON \u2014 '+_dlShadow._LEXICON_WORDS.length+' WORDS<\/div>'
+    + '<div class="dl-tip">Political \/ organizing vocabulary shown in the glossary and word-of-the-day features.<\/div>'
+    + '<div id="dl-lex-list"><\/div>'
+    + '<button class="dl-add-btn" onclick="dlLexAdd()">\uFF0B ADD WORD<\/button>';
+}
+
+function dlBindLexicon() { dlLexRender(); }
+
+function dlLexRender() {
+  const list = document.getElementById('dl-lex-list');
+  if (!list) return;
+  list.innerHTML = _dlShadow._LEXICON_WORDS.map(function(w,i){
+    return '<div class="dl-row" style="grid-template-columns:180px 1fr auto;">'
+      +'<div><div class="dl-row-meta">WORD<\/div><input value="'+esc(w.word)+'" onchange="_dlShadow._LEXICON_WORDS['+i+'].word=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">DEFINITION<\/div><input value="'+esc(w.def)+'" onchange="_dlShadow._LEXICON_WORDS['+i+'].def=this.value"><\/div>'
+      +'<button class="dl-del-btn" onclick="_dlShadow._LEXICON_WORDS.splice('+i+',1);dlLexRender()" style="align-self:center;">\u2715<\/button>'
+      +'<\/div>';
+  }).join('');
+}
+
+function dlLexAdd() {
+  _dlShadow._LEXICON_WORDS.push({word:'new-word',def:'Definition here'});
+  dlLexRender();
+}
+
+// ── WORD ROOTS ────────────────────────────────────────────
+function dlRenderRoots() {
+  return '<div class="dl-section-head">ETYMOLOGY ROOTS \u2014 '+_dlShadow.EDU_ROOTS.length+' ROOTS<span class="dl-badge">Schema: [root, language, meaning, example]<\/span><\/div>'
+    + '<div class="dl-tip">Word roots used in the etymology drills. Language = Latin, Greek, Old English, etc.<\/div>'
+    + '<input class="dl-search" id="dl-root-search" placeholder="\uD83D\uDD0D Filter roots..." oninput="dlRootsRender(this.value)">'
+    + '<div id="dl-roots-list"><\/div>'
+    + '<button class="dl-add-btn" onclick="dlRootAdd()">\uFF0B ADD ROOT<\/button>';
+}
+
+function dlBindRoots() { dlRootsRender(''); }
+
+function dlRootsRender(filter) {
+  const list = document.getElementById('dl-roots-list');
+  if (!list) return;
+  var roots = _dlShadow.EDU_ROOTS.map(function(r,i){ return {r:r,i:i}; });
+  if (filter) roots = roots.filter(function(x){ return x.r.join(' ').toLowerCase().includes(filter.toLowerCase()); });
+  list.innerHTML = roots.slice(0,80).map(function(x){
+    var r=x.r, i=x.i;
+    return '<div class="dl-row" style="grid-template-columns:120px 100px 1fr 1fr auto;">'
+      +'<div><div class="dl-row-meta">ROOT<\/div><input value="'+esc(r[0])+'" onchange="_dlShadow.EDU_ROOTS['+i+'][0]=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">LANGUAGE<\/div><input value="'+esc(r[1])+'" onchange="_dlShadow.EDU_ROOTS['+i+'][1]=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">MEANING<\/div><input value="'+esc(r[2])+'" onchange="_dlShadow.EDU_ROOTS['+i+'][2]=this.value"><\/div>'
+      +'<div><div class="dl-row-meta">EXAMPLE WORD<\/div><input value="'+esc(r[3])+'" onchange="_dlShadow.EDU_ROOTS['+i+'][3]=this.value"><\/div>'
+      +'<button class="dl-del-btn" onclick="_dlShadow.EDU_ROOTS.splice('+i+',1);dlRootsRender(\'\')" style="align-self:center;">\u2715<\/button>'
+      +'<\/div>';
+  }).join('');
+}
+
+function dlRootAdd() {
+  _dlShadow.EDU_ROOTS.push(['root','Latin','meaning','example']);
+  dlRootsRender('');
+}
+
+// ── RAW JSON ──────────────────────────────────────────────
+function dlRenderRaw() {
+  const datasets = [
+    {id:'raw-edu',  label:'EDU_MATRIX',       val:function(){ return JSON.stringify(_dlShadow.EDU_MATRIX,null,2); }},
+    {id:'raw-roots',label:'EDU_ROOTS',        val:function(){ return JSON.stringify(_dlShadow.EDU_ROOTS,null,2); }},
+    {id:'raw-lang', label:'LANG_DRILL_LANGS', val:function(){ return JSON.stringify(_dlShadow.LANG_DRILL_LANGS,null,2); }},
+    {id:'raw-ph',   label:'PHRASES',          val:function(){ return JSON.stringify(_dlShadow.PHRASES,null,2); }},
+    {id:'raw-lex',  label:'_LEXICON_WORDS',   val:function(){ return JSON.stringify(_dlShadow._LEXICON_WORDS,null,2); }},
+    {id:'raw-facts',label:'_FACTS',           val:function(){ return JSON.stringify(_dlShadow._FACTS,null,2); }},
+  ];
+  var out = '<div class="dl-section-head">RAW JSON EDITOR<\/div>'
+    + '<div class="dl-tip">Paste bulk JSON directly into any array. Click APPLY to parse and apply. Invalid JSON will be flagged. This is the fastest way to do a bulk import.<\/div>';
+  datasets.forEach(function(d){
+    out += '<div style="margin-bottom:18px;">'
+      +'<div class="dl-section-head" style="font-size:0.62rem;margin-bottom:6px;">'+d.label+'<\/div>'
+      +'<textarea id="'+d.id+'" style="width:100%;min-height:140px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.15);color:var(--text);font-family:var(--font);font-size:0.68rem;padding:8px;box-sizing:border-box;resize:vertical;">'+esc(d.val())+'<\/textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:4px;">'
+      +'<button style="font-size:0.66rem;padding:4px 12px;border-color:var(--hi);color:var(--hi);" onclick="dlRawApply(\''+d.id+'\',\''+d.label+'\')">&#10003; APPLY JSON<\/button>'
+      +'<span id="raw-status-'+d.id+'" style="font-size:0.62rem;color:var(--text-dim);align-self:center;"><\/span>'
+      +'<\/div><\/div>';
+  });
+  return out;
+}
+
+function dlRawApply(textareaId, arrayName) {
+  const el = document.getElementById(textareaId);
+  const status = document.getElementById('raw-status-' + textareaId);
+  try {
+    const parsed = JSON.parse(el.value);
+    const map = {
+      'EDU_MATRIX':       ()=>{ _dlShadow.EDU_MATRIX=parsed; },
+      'EDU_ROOTS':        ()=>{ _dlShadow.EDU_ROOTS=parsed; },
+      'LANG_DRILL_LANGS': ()=>{ _dlShadow.LANG_DRILL_LANGS=parsed; },
+      'PHRASES':          ()=>{ _dlShadow.PHRASES=parsed; },
+      '_LEXICON_WORDS':   ()=>{ _dlShadow._LEXICON_WORDS=parsed; },
+      '_FACTS':           ()=>{ _dlShadow._FACTS=parsed; },
+    };
+    if (map[arrayName]) { map[arrayName](); }
+    status.style.color = 'var(--hi)';
+    status.textContent = `✓ Applied — ${Array.isArray(parsed)?parsed.length+' entries':'OK'} — ${new Date().toLocaleTimeString()}`;
+  } catch(e) {
+    status.style.color = '#ff5060';
+    status.textContent = '✗ JSON parse error: ' + e.message;
+  }
+}
+
+// ── COMPILE ───────────────────────────────────────────────
+function dataLabCompile() {
+  const btn = document.getElementById('dl-compile-btn');
+  btn.textContent = '⏳ COMPILING...';
+  btn.disabled = true;
+
+  setTimeout(()=>{
+    try {
+      let src = document.documentElement.outerHTML;
+
+      // Replace EDU_MATRIX
+      src = src.replace(
+        /const EDU_MATRIX = \[[\s\S]*?\];\n\/\/ ── RELATIONS/,
+        'const EDU_MATRIX = ' + JSON.stringify(_dlShadow.EDU_MATRIX, null, 0) + ';\n// ── RELATIONS'
+      );
+
+      // Replace EDU_ROOTS
+      src = src.replace(
+        /const EDU_ROOTS = \[[\s\S]*?\];\n\s*EDU_MATRIX\.forEach/,
+        'const EDU_ROOTS = ' + JSON.stringify(_dlShadow.EDU_ROOTS, null, 0) + ';\n  EDU_MATRIX.forEach'
+      );
+
+      // Replace PHRASES
+      src = src.replace(
+        /const PHRASES = \[[\s\S]*?\];\n\n\/\/ EDU_MATRIX/,
+        'const PHRASES = ' + JSON.stringify(_dlShadow.PHRASES, null, 0) + ';\n\n// EDU_MATRIX'
+      );
+
+      // Replace CITIES_RAW (backtick string)
+      src = src.replace(
+        /const CITIES_RAW = `[^`]*`;/,
+        'const CITIES_RAW = `' + _dlShadow.CITIES_RAW + '`;'
+      );
+
+      // Replace TICKERS_RAW
+      src = src.replace(
+        /const TICKERS_RAW = `[^`]*`;/,
+        'const TICKERS_RAW = `' + _dlShadow.TICKERS_RAW + '`;'
+      );
+
+      // Replace _FACTS
+      src = src.replace(
+        /const _FACTS = \[[\s\S]*?\];\n\nconst _LEXICON/,
+        'const _FACTS = ' + JSON.stringify(_dlShadow._FACTS, null, 0) + ';\n\nconst _LEXICON'
+      );
+
+      // Replace _LEXICON_WORDS
+      src = src.replace(
+        /const _LEXICON_WORDS = \[[\s\S]*?\];\n/,
+        'const _LEXICON_WORDS = ' + JSON.stringify(_dlShadow._LEXICON_WORDS, null, 0) + ';\n'
+      );
+
+      // Replace LANG_DRILL_LANGS
+      src = src.replace(
+        /const LANG_DRILL_LANGS = \[[\s\S]*?\];\n\n\/\/ Normalize/,
+        'const LANG_DRILL_LANGS = ' + JSON.stringify(_dlShadow.LANG_DRILL_LANGS, null, 0) + ';\n\n// Normalize'
+      );
+
+      // Also bake custom data like normal exportDB
+      const full = [...INITIAL_DATA, ...customData];
+      src = src.replace(
+        /const INITIAL_DATA = \[[\s\S]*?\];/,
+        'const INITIAL_DATA = ' + JSON.stringify(full, null, 2) + ';'
+      );
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([src], {type:'text/html'}));
+      a.download = 'JAC_DataLab_' + new Date().toISOString().slice(0,10) + '.html';
+      a.click();
+
+      btn.textContent = '✓ DOWNLOADED';
+      btn.style.background = 'var(--hi)';
+      btn.classList.add('dl-compile-flash');
+      setTimeout(()=>{ btn.textContent = '⬇ COMPILE + DOWNLOAD'; btn.disabled=false; }, 2500);
+    } catch(e) {
+      btn.textContent = '✗ ERROR — ' + e.message.slice(0,40);
+      btn.style.background = '#ff3050';
+      btn.disabled = false;
+      setTimeout(()=>{ btn.textContent = '⬇ COMPILE + DOWNLOAD'; btn.style.background='var(--hi)'; }, 3000);
+    }
+  }, 80);
+}
+
+// end DATA LAB
 
 function exportDB() {
   const full = [...INITIAL_DATA, ...customData];
