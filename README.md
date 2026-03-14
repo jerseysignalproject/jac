@@ -118,7 +118,7 @@ While JSP focuses on the "macro" (public records and data journalism), the Colle
 ---
 
 ## 🚀 GETTING STARTED
-1.  **Download** `jac.html`.
+1.  **Download** `jac.htm`.
 2.  **Open** in any modern browser (2018+).
 3.  **Go Offline:** Turn off Wi-Fi and watch it work. 
 4.  **PWA Ready:** "Add to Home Screen" on mobile for a native, offline-cached app experience.
